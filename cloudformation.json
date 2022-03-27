@@ -1,0 +1,330 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "SSHLocation": {
+      "Description": " The IP address range that can be used to SSH to the EC2 instances",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "DefaultVPCCidr": {
+      "Description": "The CIDR block of the default VPC",
+      "Type": "String",
+      "Default": "172.31.0.0/16"
+    },
+    "KeyName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "Default": "mynewkey",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    }
+  },
+  "Mappings": {
+    "AWSRegionArch2AMI": {
+      "af-south-1": {
+        "ID": "ami-064cc455f8a1ef504"
+      },
+      "ap-east-1": {
+        "ID": "ami-f85b1989"
+      },
+      "ap-northeast-1": {
+        "ID": "ami-0b2c2a754d5b4da22"
+      },
+      "ap-northeast-2": {
+        "ID": "ami-0493ab99920f410fc"
+      },
+      "ap-northeast-3": {
+        "ID": "ami-01344f6f63a4decc1"
+      },
+      "ap-south-1": {
+        "ID": "ami-03cfb5e1fb4fac428"
+      },
+      "ap-southeast-1": {
+        "ID": "ami-0ba35dc9caf73d1c7"
+      },
+      "ap-southeast-2": {
+        "ID": "ami-0ae99b503e8694028"
+      },
+      "ca-central-1": {
+        "ID": "ami-0803e21a2ec22f953"
+      },
+      "cn-north-1": {
+        "ID": "ami-07a3f215cc90c889c"
+      },
+      "cn-northwest-1": {
+        "ID": "ami-0a3b3b10f714a0ff4"
+      },
+      "eu-central-1": {
+        "ID": "ami-0474863011a7d1541"
+      },
+      "eu-north-1": {
+        "ID": "ami-0de4b8910494dba0f"
+      },
+      "eu-south-1": {
+        "ID": "ami-08427144fe9ebdef6"
+      },
+      "eu-west-1": {
+        "ID": "ami-015232c01a82b847b"
+      },
+      "eu-west-2": {
+        "ID": "ami-0765d48d7e15beb93"
+      },
+      "eu-west-3": {
+        "ID": "ami-0caf07637eda19d9c"
+      },
+      "me-south-1": {
+        "ID": "ami-0744743d80915b497"
+      },
+      "sa-east-1": {
+        "ID": "ami-0a52e8a6018e92bb0"
+      },
+      "us-east-1": {
+        "ID": "ami-032930428bf1abbff"
+      },
+      "us-east-2": {
+        "ID": "ami-027cab9a7bf0155df"
+      },
+      "us-west-1": {
+        "ID": "ami-088c153f74339f34c"
+      },
+      "us-west-2": {
+        "ID": "ami-01fee56b22f308154"
+      }
+    }
+  },
+  "Resources": {
+    "EC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "InstanceType": "t1.micro",
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionArch2AMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            "ID"
+          ]
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "InstanceSecurityGroup"
+          }
+        ],
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "\n",
+              [
+                "#!/bin/bash",
+                "set -x",
+                "yum update -y",
+                "yum install -y docker",
+                "chkconfig docker on",
+                "service docker start",
+                "docker pull node",
+                "mkdir -p /selfdecode",
+                "echo ';' | sfdisk /dev/xvdf",
+                "mkfs -t ext4 /dev/xvdf1",
+                "echo '/dev/xvdf1       /selfdecode   ext4    defaults,nofail 0       2' >> /etc/fstab",
+                "mount -a",
+                "[ -f /selfdecode/index.html ] || cat << EOF >> /selfdecode/index.html",
+                "<!DOCTYPE html>",
+                "<html>",
+                "",
+                "<head>",
+                "    <title>Hello World Selfdecode Challenge</title>",
+                "</head>",
+                "",
+                "<body>",
+                "    <p>",
+                "    <h1>Hello World</h1>",
+                "    </p>",
+                "    <p>",
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "        <img src='https://",
+                      {
+                        "Ref": "S3Bucket"
+                      },
+                      ".s3.amazonaws.com/screenshot1.png' alt='screenshot1'>"
+                    ]
+                  ]
+                },
+                "    </p>",
+                "    <p>",
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "        <img src='https://",
+                      {
+                        "Ref": "S3Bucket"
+                      },
+                      ".s3.amazonaws.com/screenshot2.png' alt='screenshot2'>"
+                    ]
+                  ]
+                },
+                "    </p>",
+                "    <p>",
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "        <img src='https://",
+                      {
+                        "Ref": "S3Bucket"
+                      },
+                      ".s3.amazonaws.com/screen-shot3.png' alt='screen-shot3'>"
+                    ]
+                  ]
+                },
+                "    </p>",
+                "</body>",
+                "",
+                "</html>",
+                "EOF",
+                "[ -f /selfdecode/server.js ] || cat << EOF >> /selfdecode/server.js",
+                "const http = require('http')",
+                "const fs = require('fs')",
+                "const server = http.createServer((req, res) => {",
+                "    res.writeHead(200, { 'content-type': 'text/html'})",
+                "    fs.createReadStream('/selfdecode/index.html').pipe(res)",
+                "})",
+                "server.listen(80)",
+                "EOF",
+                "docker run --restart=always -d -v /selfdecode:/selfdecode -p 80:80 node /selfdecode/server.js"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "EBSVolume": {
+      "Type": "AWS::EC2::Volume",
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::GetAtt": [
+            "EC2Instance",
+            "AvailabilityZone"
+          ]
+        },
+        "Size": "1",
+        "Encrypted": "true"
+      }
+    },
+    "InstanceEBSAttachment": {
+      "Type": "AWS::EC2::VolumeAttachment",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "EC2Instance"
+        },
+        "VolumeId": {
+          "Ref": "EBSVolume"
+        },
+        "Device": "/dev/xvdf"
+      }
+    },
+    "InstanceSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Enable management over public IP and HTTP from load balancer",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "SSHLocation"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "DefaultVPCCidr"
+            }
+          }
+        ]
+      }
+    },
+    "ElasticLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "AvailabilityZones": {
+          "Fn::GetAZs": {
+            "Ref": "AWS::Region"
+          }
+        },
+        "CrossZone": true,
+        "Instances": [
+          {
+            "Ref": "EC2Instance"
+          }
+        ],
+        "Listeners": [
+          {
+            "LoadBalancerPort": "80",
+            "Protocol": "HTTP",
+            "InstancePort": "80",
+            "InstanceProtocol": "HTTP"
+          }
+        ],
+        "HealthCheck": {
+          "Target": "HTTP:80/",
+          "HealthyThreshold": "2",
+          "UnhealthyThreshold": "2",
+          "Interval": "10",
+          "Timeout": "5"
+        }
+      }
+    },
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "PublicRead"
+      }
+    },
+    "BucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Id": "MyPolicy",
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "PublicReadForGetBucketObjects",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:s3:::",
+                    {
+                      "Ref": "S3Bucket"
+                    },
+                    "/*"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        "Bucket": {
+          "Ref": "S3Bucket"
+        }
+      }
+    }
+  }
+}
