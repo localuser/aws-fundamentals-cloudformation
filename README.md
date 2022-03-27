@@ -19,8 +19,8 @@ The following are requirements for this solution and are beyond the scope of thi
 1. This configuration uses a `t1.micro` instance type. This type is not available in al AWS regions, so please select carefully a region (like `us-east-1`) that supports it. You can configure your AWS region by setting the `AWS_DEFAULT_REGION` environment variable.
 
 ## Before you start
-1. ELB classic load balancer was used in the CloudFormation template because the assignment instructions appear to indicate this. 
-1. HTTP listener is used due to brief only mentioning this protocol. HTTPS would obviously be preferred but that would also require an ACM certificate and a hosted zone for DNS validation to automate the process. Seems out of scope for this assignment.
+1. An ELB classic load balancer was used in the CloudFormation template because the assignment instructions appear to indicate this. An Application load balancer would be preferred in most instances, but the simplicity of this assignment doesn't warrant the increased complexity it will bring. 
+1. An HTTP listener is the only listener used on the ELB due to the brief only mentioning this protocol. HTTPS would be preferred, but that would require an ACM certificate and a hosted zone for DNS validation to automate the process. Seems out of scope for this assignment.
 1. The S3 bucket provisioning from Stage 2 was added to this CloudFormation stack to make life easier. I didn't want to think about a name for the bucket so I just let CF decide and injected the generated name into my EC2 instance user_data for the HTML page.
 1. An older Amazon Linux AMI has been used in the CloudFormation script. The correct AMI will be chosen based on your configured AWS region for deployment. The map of AMI IDs was available from a template somewhere and saved me some time looking for the latest versions in every region. Updates are done on boot for security reasons.
 
