@@ -14,14 +14,17 @@ The following are requirements for this solution and are beyond the scope of thi
 ## Getting Started
 Follow these steps to get this solution running in your environment.
 
-1. Create a new EC2 key pair: `aws ec2 create-key-pair --key-name mykey --query 'KeyMaterial' --output text > MyKey.pem`
+1. Create a new EC2 key pair: 
+    * `aws ec2 create-key-pair --key-name mykey --query 'KeyMaterial' --output text > MyKey.pem`
     * The value of "KeyMaterial" from the output has been saved to "MyKey.pem"; this is your private ssh key
-1. `aws cloudformation create-stack --stack-name mystack --template-body file://cloudformation.json`
-1. Check that you have a default VPC in your confgured AWS region: `aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].CidrBlock'`
+1. Check that you have a default VPC in your confgured AWS region: 
+    * `aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].CidrBlock'`
     * The CidrBlock of this default VPC must be injected into your cloudformation command in a later step. Save this value.
-1. Check your current public IP: `curl icanhazip.com`
+1. Check your current public IP: 
+    * `curl icanhazip.com`
     * This IP can be used as a Cloudformation parameter to allow ssh access to your address only. Save this value.
-1. Create the Cloudformation stack. (I have injected the 2 above commands here to save effort): `aws cloudformation create-stack --stack-name mystack --template-body file://cloudformation.json --parameters ParameterKey=SSHLocation,ParameterValue="$(curl icanhazip.com)/32" ParameterKey=DefaultVPCCidr,ParameterValue=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].CidrBlock')`
+1. Create the Cloudformation stack. (I have injected the 2 above commands here to save effort): 
+    * `aws cloudformation create-stack --stack-name mystack --template-body file://cloudformation.json --parameters ParameterKey=SSHLocation,ParameterValue="$(curl icanhazip.com)/32" ParameterKey=DefaultVPCCidr,ParameterValue=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].CidrBlock')`
 
 ## Connecting to the instance
 
